@@ -51,8 +51,6 @@ export default function SorpresaPage() {
   const [bgHearts, setBgHearts] = useState<BgHeart[]>([]);
   const [clickHearts, setClickHearts] = useState<ClickHeart[]>([]);
   const [razonesVolteadas, setRazonesVolteadas] = useState<number[]>([]);
-  const [locationAsked, setLocationAsked] = useState(false);
-  const [locationMsg, setLocationMsg] = useState("");
 
   /* ============================================================
      Corazones flotantes de fondo
@@ -159,47 +157,6 @@ export default function SorpresaPage() {
   }, []);
 
   /* ============================================================
-     Pedir ubicación al pulsar el primer "siguiente"
-     ============================================================ */
-  const pedirUbicacion = () => {
-
-    if (!navigator.geolocation) {
-      setLocationMsg("Tu navegador no permite compartir ubicación.");
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude, accuracy } = pos.coords;
-        try {
-          const res = await fetch("/api/location", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              latitude,
-              longitude,
-              accuracy,
-              shareToken: token,
-            }),
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error || "No se pudo enviar");
-          setLocationMsg("❤️");
-          lluviaDeCorazones();
-        } catch (err) {
-          setLocationMsg(
-            err instanceof Error ? err.message : "Hubo un problema enviando."
-          );
-        }
-      },
-      () => {
-        setLocationMsg("❤️");
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  };
-
-  /* ============================================================
      Navegación entre slides
      ============================================================ */
   const totalSlides = 7;
@@ -207,8 +164,6 @@ export default function SorpresaPage() {
   const ir = (n: number) => {
     if (n < 0 || n >= totalSlides || n === actual) return;
     setActual(n);
-    // Si es la primera vez que pasamos al slide 2, pedimos ubicación
-    if (n === 1 && !locationAsked) pedirUbicacion();
   };
 
   /* Teclado */
@@ -221,7 +176,7 @@ export default function SorpresaPage() {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actual, locationAsked]);
+  }, [actual]);
 
   /* Deslizar con el dedo */
   const x0 = useRef<number | null>(null);
@@ -401,19 +356,6 @@ export default function SorpresaPage() {
                 <span className="eti">Segundos</span>
               </div>
             </div>
-
-            {locationMsg && (
-              <p
-                style={{
-                  textAlign: "center",
-                  marginTop: 24,
-                  fontSize: ".85rem",
-                  color: "#a05a7c",
-                }}
-              >
-                {locationMsg}
-              </p>
-            )}
           </div>
         </section>
 
